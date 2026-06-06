@@ -692,7 +692,7 @@
 
             <div style="background:var(--gold-pale);border:1px solid #d4c07a;border-radius:10px;padding:16px">
               <div style="font-weight:600;margin-bottom:6px;color:var(--gold)">📤 استيراد نسخة احتياطية</div>
-              <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">⚠️ تحذير: الاستيراد سيضيف البيانات فوق الموجودة</div>
+              <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">⚠️ يشمل: الإيرادات، المصاريف، الإيداعات، السحوبات، الخدمات، الإعلانات، القروض، تحليل المتجر، تحليل الخدمات، الإعدادات</div>
               <div class="field" style="margin-bottom:10px">
                 <input type="file" id="backup-file-input" accept=".json" style="padding:8px;background:white;border-radius:6px;border:1.5px solid var(--border);width:100%;font-family:var(--font);font-size:13px">
               </div>
@@ -2830,29 +2830,73 @@ window.exportBackup = async function(){
   status.style.display='block';
   status.style.background='var(--green-pale)';
   status.style.color='var(--green)';
-  status.textContent='⏳ جاري تجميع البيانات...';
+  status.textContent='⏳ جاري تجميع البيانات من Firebase...';
   try {
+    // جلب كل البيانات مباشرة من Firebase لضمان الاكتمال
+    async function fetchAll(colName){
+      const snap = await window.getDocs(window.collection(db, colName));
+      return snap.docs.map(d=>({id:d.id,...d.data()}));
+    }
+    const [
+      incomeAll, expensesAll, depositsAll, withdrawalsAll,
+      servicesAll, marketingAll, loanFromCoAll, loanToCoAll,
+      storePerfAll, svcPerfAll, usersAll
+    ] = await Promise.all([
+      fetchAll('income'), fetchAll('expenses'), fetchAll('deposits'), fetchAll('withdrawals'),
+      fetchAll('services'), fetchAll('marketing'), fetchAll('loanFromCo'), fetchAll('loanToCo'),
+      fetchAll('storePerf'), fetchAll('svcPerf'), fetchAll('users')
+    ]);
+    // جلب الإعدادات
+    const bSnap = await window.getDoc ? window.getDoc(window.doc(db,'settings','bankBalance')) : null;
+    const fSnap = await window.getDoc ? window.getDoc(window.doc(db,'settings','fees')) : null;
+    const settingsBankBalance = bSnap && bSnap.exists() ? bSnap.data() : {value: bankBalance};
+    const settingsFees = fSnap && fSnap.exists() ? fSnap.data() : {deliveryOrders, myfatoorahAmount, demaAmount};
+    const total = incomeAll.length + expensesAll.length + depositsAll.length + withdrawalsAll.length
+      + servicesAll.length + marketingAll.length + loanFromCoAll.length + loanToCoAll.length
+      + storePerfAll.length + svcPerfAll.length + usersAll.length;
+    status.textContent = `⏳ تجميع ${total} سجل...`;
     const backup = {
       exportDate: new Date().toISOString(),
-      version: '2.1',
-      income: incomeData,
-      expenses: expenseData,
-      deposits: depositsData,
-      withdrawals: withdrawalsData,
-      services: serviceData,
-      marketing: marketingData,
-      loanFromCo: loanFromCoData,
-      loanToCo: loanToCoData,
+      version: '3.0',
+      summary: {
+        income: incomeAll.length,
+        expenses: expensesAll.length,
+        deposits: depositsAll.length,
+        withdrawals: withdrawalsAll.length,
+        services: servicesAll.length,
+        marketing: marketingAll.length,
+        loanFromCo: loanFromCoAll.length,
+        loanToCo: loanToCoAll.length,
+        storePerf: storePerfAll.length,
+        svcPerf: svcPerfAll.length,
+        users: usersAll.length,
+        total
+      },
+      income: incomeAll,
+      expenses: expensesAll,
+      deposits: depositsAll,
+      withdrawals: withdrawalsAll,
+      services: servicesAll,
+      marketing: marketingAll,
+      loanFromCo: loanFromCoAll,
+      loanToCo: loanToCoAll,
+      storePerf: storePerfAll,
+      svcPerf: svcPerfAll,
+      users: usersAll,
+      settings: {
+        bankBalance: settingsBankBalance,
+        fees: settingsFees
+      },
       bankBalance: bankBalance
     };
     const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `kuwait-organic-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `kuwait-organic-backup-v3-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    status.textContent = '✅ تم تحميل النسخة الاحتياطية بنجاح';
+    status.textContent = `✅ تم تحميل النسخة الاحتياطية — ${total} سجل من ${Object.keys(backup.summary).length - 1} قسم`;
   } catch(e) {
     status.style.background='var(--red-pale)';
     status.style.color='var(--red)';
@@ -2873,8 +2917,8 @@ window.importBackup = async function(){
     const text = await file.text();
     const data = JSON.parse(text);
     let count = 0;
-    const cols = ['income','expenses','deposits','withdrawals','services','marketing','loanFromCo','loanToCo'];
-    const colMap = {income:'income',expenses:'expenses',deposits:'deposits',withdrawals:'withdrawals',services:'services',marketing:'marketing',loanFromCo:'loanFromCo',loanToCo:'loanToCo'};
+    const cols = ['income','expenses','deposits','withdrawals','services','marketing','loanFromCo','loanToCo','storePerf','svcPerf'];
+    const colMap = {income:'income',expenses:'expenses',deposits:'deposits',withdrawals:'withdrawals',services:'services',marketing:'marketing',loanFromCo:'loanFromCo',loanToCo:'loanToCo',storePerf:'storePerf',svcPerf:'svcPerf'};
     if(clearFirst){
       status.textContent='⏳ جاري حذف البيانات القديمة...';
       for(const col of cols){
@@ -2896,7 +2940,11 @@ window.importBackup = async function(){
         }
       }
     }
-    if(data.bankBalance){
+    // استيراد الإعدادات
+    if(data.settings){
+      if(data.settings.bankBalance) await setDoc(doc(db,'settings','bankBalance'),{...data.settings.bankBalance,updatedAt:serverTimestamp()});
+      if(data.settings.fees) await setDoc(doc(db,'settings','fees'),{...data.settings.fees,updatedAt:serverTimestamp()});
+    } else if(data.bankBalance){
       await setDoc(doc(db,'settings','bankBalance'),{value:data.bankBalance,updatedAt:serverTimestamp()});
     }
     status.style.background='var(--green-pale)'; status.style.color='var(--green)';
