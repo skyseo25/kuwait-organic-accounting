@@ -2025,7 +2025,7 @@ function updateDiffDisplay(){
 // ─── LAST BACKUP DISPLAY ───────────────────────────────
 async function loadLastBackupDate(){
   try {
-    const snap = await window.getDoc(window.doc(db,'settings','lastBackup'));
+    const snap = await getDoc(doc(db,'settings','lastBackup'));
     if(snap && snap.exists()){
       const d = snap.data();
       const dt = new Date(d.date);
@@ -2861,7 +2861,7 @@ window.exportBackup = async function(){
   try {
     // جلب كل البيانات مباشرة من Firebase لضمان الاكتمال
     async function fetchAll(colName){
-      const snap = await window.getDocs(window.collection(db, colName));
+      const snap = await getDocs(collection(db, colName));
       return snap.docs.map(d=>({id:d.id,...d.data()}));
     }
     const [
@@ -2874,10 +2874,14 @@ window.exportBackup = async function(){
       fetchAll('storePerf'), fetchAll('svcPerf'), fetchAll('users')
     ]);
     // جلب الإعدادات
-    const bSnap = await window.getDoc ? window.getDoc(window.doc(db,'settings','bankBalance')) : null;
-    const fSnap = await window.getDoc ? window.getDoc(window.doc(db,'settings','fees')) : null;
-    const settingsBankBalance = bSnap && bSnap.exists() ? bSnap.data() : {value: bankBalance};
-    const settingsFees = fSnap && fSnap.exists() ? fSnap.data() : {deliveryOrders, myfatoorahAmount, demaAmount};
+    let settingsBankBalance = {value: bankBalance};
+    let settingsFees = {deliveryOrders, myfatoorahAmount, demaAmount};
+    try {
+      const bSnap = await getDoc(doc(db,'settings','bankBalance'));
+      if(bSnap && bSnap.exists()) settingsBankBalance = bSnap.data();
+      const fSnap = await getDoc(doc(db,'settings','fees'));
+      if(fSnap && fSnap.exists()) settingsFees = fSnap.data();
+    } catch(e){ console.warn('settings fetch:', e); }
     const total = incomeAll.length + expensesAll.length + depositsAll.length + withdrawalsAll.length
       + servicesAll.length + marketingAll.length + loanFromCoAll.length + loanToCoAll.length
       + storePerfAll.length + svcPerfAll.length + usersAll.length;
