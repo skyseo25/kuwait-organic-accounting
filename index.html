@@ -292,7 +292,7 @@
         </div>
         <div class="summary-grid" style="grid-template-columns:1fr;margin-bottom:28px;margin-top:16px">
           <div class="summary-card" style="grid-column:1">
-            <div class="label">الفروقات (الرصيد البنكي − صافي الربح)</div>
+            <div class="label">الفروقات (الرصيد البنكي + صافي الربح)</div>
             <div class="amount" id="diff-display" style="font-size:24px">د.ك 0.000</div>
             <div class="sub" id="diff-sub">—</div>
           </div>
@@ -2140,19 +2140,21 @@ function updateDiffDisplay(){
   const totalWdr=withdrawalsData.reduce((s,r)=>s+parseFloat(r.amount||0),0);
   const totalMkt=marketingData.reduce((s,r)=>s+parseFloat(r.amount||0),0);
   const {total:totalFees}=calcFees();
+  // صافي الربح = كل الدخل - كل المصاريف
   const net=(totalInc+totalDep)-(totalExp+totalWdr)-totalFees-totalMkt;
-  const diff=bankBalance-net;
+  // الفروقات = الرصيد البنكي + صافي الربح
+  const diff=bankBalance+net;
   const d1=document.getElementById('diff-display');
   const d2=document.getElementById('diff-sub');
   const d3=document.getElementById('diff-display-loan');
   if(d1){
     d1.textContent=fmtKWD(Math.abs(diff));
-    d1.className='amount '+(diff>=0?'diff-pos':'diff-neg');
+    d1.className='amount '+(diff>0?'diff-pos':diff<0?'diff-neg':'profit');
     if(diff>0) d2.textContent='الرصيد البنكي أعلى من الصافي — فائض ✓';
     else if(diff<0) d2.textContent='الرصيد البنكي أقل من الصافي — عجز ⚠️';
     else d2.textContent='الرصيد البنكي مطابق للصافي ✓';
   }
-  if(d3){ d3.textContent=fmtKWD(Math.abs(diff)); d3.className='amount '+(diff>=0?'diff-pos':'diff-neg'); }
+  if(d3){ d3.textContent=fmtKWD(Math.abs(diff)); d3.className='amount '+(diff>0?'diff-pos':diff<0?'diff-neg':'profit'); }
   document.getElementById('bank-balance-display').textContent=fmtKWD(bankBalance);
 }
 
