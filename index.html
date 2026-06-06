@@ -2138,8 +2138,9 @@ function updateDiffDisplay(){
   const totalExp=expenseData.reduce((s,r)=>s+parseFloat(r.amount||0),0);
   const totalDep=depositsData.reduce((s,r)=>s+parseFloat(r.amount||0),0);
   const totalWdr=withdrawalsData.reduce((s,r)=>s+parseFloat(r.amount||0),0);
+  const totalMkt=marketingData.reduce((s,r)=>s+parseFloat(r.amount||0),0);
   const {total:totalFees}=calcFees();
-  const net=(totalInc+totalDep)-(totalExp+totalWdr)-totalFees;
+  const net=(totalInc+totalDep)-(totalExp+totalWdr)-totalFees-totalMkt;
   const diff=bankBalance-net;
   const d1=document.getElementById('diff-display');
   const d2=document.getElementById('diff-sub');
