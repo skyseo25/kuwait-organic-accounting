@@ -347,8 +347,8 @@
         <div class="section-card">
           <div class="section-header"><h3>تفصيل الخدمات</h3></div>
           <table>
-            <thead><tr><th style="width:40px">#</th><th>التاريخ</th><th>الوصف</th><th>قيمة الخدمة</th><th>ساجد</th><th>إسلام</th><th>جعفر</th><th>عمران</th><th>تكلفة الأدوات</th><th>صافي الخدمة</th><th></th></tr></thead>
-            <tbody id="service-table-body"><tr><td colspan="11" class="empty-state">لا توجد خدمات</td></tr></tbody>
+            <thead><tr><th style="width:40px">#</th><th>التاريخ</th><th>الوصف</th><th>قيمة الخدمة</th><th>ساجد</th><th>إسلام</th><th>جعفر</th><th>عمران</th><th>تكلفة الأدوات</th><th>صافي الخدمة</th><th style="width:40px">المستخدم</th><th></th></tr></thead>
+            <tbody id="service-table-body"><tr><td colspan="12" class="empty-state">لا توجد خدمات</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -2377,9 +2377,16 @@ window.renderServices=function(){
   document.getElementById('svc-total-labor').textContent=fmtKWD(totalLabor);
   document.getElementById('svc-net').textContent=fmtKWD(net);
   const tbody=document.getElementById('service-table-body');
-  if(!data.length){tbody.innerHTML=`<tr><td colspan="11" class="empty-state">لا توجد خدمات</td></tr>`;return;}
-  tbody.innerHTML=data.map((r,idx)=>`<tr>
-    <td style="text-align:center;color:var(--text-muted);font-size:12px;font-weight:600;background:#fafcfb">${idx+1}</td><td>${r.date||''}</td><td>${r.desc||'—'}</td>
+  if(!data.length){tbody.innerHTML=`<tr><td colspan="12" class="empty-state">لا توجد خدمات</td></tr>`;return;}
+  tbody.innerHTML=data.map((r,idx)=>{
+    const isOld = !r.createdBy && !r.userCode; // بيانات قديمة بدون مستخدم
+    const rowStyle = isOld ? 'background:#fffbf0;border-right:3px solid var(--gold)' : '';
+    const userBadge = r.userCode
+      ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:var(--green);color:white;border-radius:50%;font-size:11px;font-weight:700">${r.userCode}</span>`
+      : `<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:var(--gold-pale);color:var(--gold);border-radius:50%;font-size:10px;font-weight:700;border:1px solid var(--gold)" title="بيانات قديمة">Q</span>`;
+    return `<tr style="${rowStyle}">
+    <td style="text-align:center;color:var(--text-muted);font-size:12px;font-weight:600;background:#fafcfb">${idx+1}</td>
+    <td>${r.date||''}</td><td>${r.desc||'—'}</td>
     <td class="amount-cell pos">${fmtKWD(r.value)}</td>
     <td class="amount-cell">${fmtKWD(r.sajed)}</td>
     <td class="amount-cell">${fmtKWD(r.islam)}</td>
@@ -2387,8 +2394,10 @@ window.renderServices=function(){
     <td class="amount-cell">${fmtKWD(r.omran)}</td>
     <td class="amount-cell neg">${fmtKWD(r.tools)}</td>
     <td class="amount-cell blue">${fmtKWD(r.netService)}</td>
+    <td style="text-align:center">${userBadge}</td>
     <td>${window.canDelete?`<button class="btn-delete" data-action="del-service" data-val="${r.id}">حذف</button>`:''}</td>
-  </tr>`).join('');
+  </tr>`;
+  }).join('');
 };
 
 // ─── EXPENSES ──────────────────────────────────────────
