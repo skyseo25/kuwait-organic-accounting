@@ -2179,7 +2179,10 @@ window.openServiceModal=function(){
   });
   document.getElementById('modal-service').classList.add('open');
 };
+var _savingService=false;
 window.saveService=async function(){
+  if(_savingService)return; _savingService=true;
+  try{
   const date=document.getElementById('svc-date').value;
   const desc=document.getElementById('svc-desc').value;
   const value=parseFloat(document.getElementById('svc-value').value)||0;
@@ -2191,12 +2194,11 @@ window.saveService=async function(){
   const totalLabor=sajed+islam+jafar+omran;
   const netService=value-tools-totalLabor;
   if(!date||!value){toast('يرجى تعبئة التاريخ وقيمة الخدمة');return;}
-  // Save service record
   await addDoc(collection(db,'services'),{date,desc,value,tools,sajed,islam,jafar,omran,totalLabor,netService,createdBy:currentUser.uid,userCode:window.currentUserCode||'?',createdAt:serverTimestamp()});
-  // Add NET value to income (صافي الخدمة فقط)
   await addDoc(collection(db,'income'),{date,category:'خدمات',amount:netService,desc:`خدمة: ${desc} (صافي بعد خصم الأدوات والعمالة)`,autoFromService:true,createdBy:currentUser.uid,userCode:window.currentUserCode||'?',createdAt:serverTimestamp()});
   toast('تم حفظ الخدمة وترحيلها ✓');
   closeModal('modal-service');
+  }finally{_savingService=false;}
 };
 window.deleteService=async function(id){
   if(!confirm('حذف هذه الخدمة؟ ملاحظة: يجب حذف الإيراد والمصروف المرحّلين يدوياً'))return;
@@ -2261,10 +2263,14 @@ window.renderExpenses=function(){
 
 // ─── DEPOSITS ──────────────────────────────────────────
 window.openDepositModal=function(){document.getElementById('dep-date').value=today();['dep-amount','dep-party','dep-desc'].forEach(id=>document.getElementById(id).value='');document.getElementById('modal-deposit').classList.add('open');};
+var _savingDeposit=false;
 window.saveDeposit=async function(){
+  if(_savingDeposit)return; _savingDeposit=true;
+  try{
   const data={date:document.getElementById('dep-date').value,party:document.getElementById('dep-party').value,amount:parseFloat(document.getElementById('dep-amount').value)||0,desc:document.getElementById('dep-desc').value,createdBy:currentUser.uid,userCode:window.currentUserCode||'?',createdAt:serverTimestamp()};
   if(!data.date||!data.amount){toast('يرجى تعبئة التاريخ والمبلغ');return;}
   await addDoc(collection(db,'deposits'),data);toast('تم الإضافة ✓');closeModal('modal-deposit');
+  }finally{_savingDeposit=false;}
 };
 window.deleteDeposit=async function(id){if(!confirm('حذف؟'))return;await deleteDoc(doc(db,'deposits',id));toast('تم الحذف');};
 window.renderDeposits=function(){
@@ -2284,10 +2290,14 @@ window.renderDeposits=function(){
 
 // ─── WITHDRAWALS ────────────────────────────────────────
 window.openWithdrawalModal=function(){document.getElementById('wdr-date').value=today();['wdr-amount','wdr-party','wdr-desc'].forEach(id=>document.getElementById(id).value='');document.getElementById('modal-withdrawal').classList.add('open');};
+var _savingWithdrawal=false;
 window.saveWithdrawal=async function(){
+  if(_savingWithdrawal)return; _savingWithdrawal=true;
+  try{
   const data={date:document.getElementById('wdr-date').value,party:document.getElementById('wdr-party').value,amount:parseFloat(document.getElementById('wdr-amount').value)||0,desc:document.getElementById('wdr-desc').value,createdBy:currentUser.uid,userCode:window.currentUserCode||'?',createdAt:serverTimestamp()};
   if(!data.date||!data.amount){toast('يرجى تعبئة التاريخ والمبلغ');return;}
   await addDoc(collection(db,'withdrawals'),data);toast('تم الإضافة ✓');closeModal('modal-withdrawal');
+  }finally{_savingWithdrawal=false;}
 };
 window.deleteWithdrawal=async function(id){if(!confirm('حذف؟'))return;await deleteDoc(doc(db,'withdrawals',id));toast('تم الحذف');};
 window.renderWithdrawals=function(){
@@ -2428,11 +2438,13 @@ window.renderMarketing=function(){
 
 // ─── LOAN FROM CO ──────────────────────────────────────
 window.openLoanFromCoModal=function(){document.getElementById('lfc-date').value=today();['lfc-amount','lfc-name','lfc-notes'].forEach(id=>document.getElementById(id).value='');document.getElementById('modal-loan-from-co').classList.add('open');};
+var _savingLoanFrom=false;
 window.saveLoanFromCo=async function(){
+  if(_savingLoanFrom)return; _savingLoanFrom=true;
+  try{
   const data={date:document.getElementById('lfc-date').value,amount:parseFloat(document.getElementById('lfc-amount').value)||0,name:document.getElementById('lfc-name').value,notes:document.getElementById('lfc-notes').value,status:document.getElementById('lfc-status').value,createdBy:currentUser.uid,userCode:window.currentUserCode||'?',createdAt:serverTimestamp()};
   if(!data.date||!data.amount){toast('يرجى تعبئة التاريخ والمبلغ');return;}
   await addDoc(collection(db,'loanFromCo'),data);
-  // أضف تلقائياً في المصاريف كفئة "قرض من الشركة"
   await addDoc(collection(db,'expenses'),{
     date:data.date,
     amount:data.amount,
@@ -2445,6 +2457,7 @@ window.saveLoanFromCo=async function(){
   });
   toast('تم الإضافة ✓ وأُضيف للمصاريف');
   closeModal('modal-loan-from-co');
+  }finally{_savingLoanFrom=false;}
 };
 window.deleteLoanFromCo=async function(id){if(!confirm('حذف؟'))return;await deleteDoc(doc(db,'loanFromCo',id));toast('تم الحذف');};
 window.updateLoanFromCoStatus=async function(id,s){await updateDoc(doc(db,'loanFromCo',id),{status:s});toast('تم التحديث ✓');};
@@ -2462,11 +2475,13 @@ window.renderLoanFromCo=function(){
 
 // ─── LOAN TO CO ────────────────────────────────────────
 window.openLoanToCoModal=function(){document.getElementById('ltc-date').value=today();['ltc-amount','ltc-name','ltc-reason','ltc-notes'].forEach(id=>document.getElementById(id).value='');document.getElementById('modal-loan-to-co').classList.add('open');};
+var _savingLoanTo=false;
 window.saveLoanToCo=async function(){
+  if(_savingLoanTo)return; _savingLoanTo=true;
+  try{
   const data={date:document.getElementById('ltc-date').value,amount:parseFloat(document.getElementById('ltc-amount').value)||0,name:document.getElementById('ltc-name').value,reason:document.getElementById('ltc-reason').value,notes:document.getElementById('ltc-notes').value,status:document.getElementById('ltc-status').value,createdBy:currentUser.uid,userCode:window.currentUserCode||'?',createdAt:serverTimestamp()};
   if(!data.date||!data.amount){toast('يرجى تعبئة التاريخ والمبلغ');return;}
   await addDoc(collection(db,'loanToCo'),data);
-  // أضف تلقائياً في الإيرادات كفئة "قرض إلى الشركة"
   await addDoc(collection(db,'income'),{
     date:data.date,
     amount:data.amount,
@@ -2479,6 +2494,7 @@ window.saveLoanToCo=async function(){
   });
   toast('تم الإضافة ✓ وأُضيف للإيرادات');
   closeModal('modal-loan-to-co');
+  }finally{_savingLoanTo=false;}
 };
 window.deleteLoanToCo=async function(id){if(!confirm('حذف؟'))return;await deleteDoc(doc(db,'loanToCo',id));toast('تم الحذف');};
 window.updateLoanToCoStatus=async function(id,s){await updateDoc(doc(db,'loanToCo',id),{status:s});toast('تم التحديث ✓');};
@@ -3245,7 +3261,10 @@ document.addEventListener('click', function(e){
     document.getElementById('modal-store-entry').classList.add('open');
   };
 
+  var _savingStoreEntry=false;
   window.saveStoreEntry = async function(){
+    if(_savingStoreEntry)return; _savingStoreEntry=true;
+    try{
     var date   = document.getElementById('sp-date').value;
     var sales  = parseFloat(document.getElementById('sp-sales').value)||0;
     var ads    = parseFloat(document.getElementById('sp-ads').value)||0;
@@ -3264,6 +3283,7 @@ document.addEventListener('click', function(e){
       document.getElementById('modal-store-entry').classList.remove('open');
       if(window.showToast) window.showToast('تم الحفظ ✓');
     } catch(e){ alert('خطأ في الحفظ: '+e.message); }
+    }finally{_savingStoreEntry=false;}
   };
 
   window.deleteStoreEntry = async function(id){
@@ -3457,7 +3477,10 @@ document.addEventListener('click', function(e){
     document.getElementById('modal-svc-entry').classList.add('open');
   };
 
+  var _savingSvcEntry=false;
   window.saveSvcEntry=async function(){
+    if(_savingSvcEntry)return; _savingSvcEntry=true;
+    try{
     var date=document.getElementById('svcp-date').value;
     var sales=parseFloat(document.getElementById('svcp-sales').value)||0;
     var ads=parseFloat(document.getElementById('svcp-ads').value)||0;
@@ -3473,6 +3496,7 @@ document.addEventListener('click', function(e){
       document.getElementById('modal-svc-entry').classList.remove('open');
       if(window.showToast) window.showToast('تم الحفظ ✓');
     }catch(e){alert('خطأ: '+e.message);}
+    }finally{_savingSvcEntry=false;}
   };
 
   window.deleteSvcEntry=async function(id){
