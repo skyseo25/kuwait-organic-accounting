@@ -2357,13 +2357,12 @@ window.saveService=async function(){
   const netService=value-tools-totalLabor;
   if(!date||!value){toast('يرجى تعبئة التاريخ وقيمة الخدمة');return;}
   await addDoc(collection(db,'services'),{date,desc,value,tools,sajed,islam,jafar,omran,totalLabor,netService,createdBy:currentUser.uid,userCode:window.currentUserCode||'?',createdAt:serverTimestamp()});
-  await addDoc(collection(db,'income'),{date,category:'خدمات',amount:netService,desc:`خدمة: ${desc} (صافي بعد خصم الأدوات والعمالة)`,autoFromService:true,createdBy:currentUser.uid,userCode:window.currentUserCode||'?',createdAt:serverTimestamp()});
-  toast('تم حفظ الخدمة وترحيلها ✓');
+  toast('تم حفظ الخدمة ✓');
   closeModal('modal-service');
   }finally{_savingService=false;}
 };
 window.deleteService=async function(id){
-  if(!confirm('حذف هذه الخدمة؟ ملاحظة: يجب حذف الإيراد والمصروف المرحّلين يدوياً'))return;
+  if(!confirm('حذف هذه الخدمة؟'))return;
   await deleteDoc(doc(db,'services',id));toast('تم الحذف');
 };
 window.renderServices=function(){
