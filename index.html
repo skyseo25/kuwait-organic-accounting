@@ -2805,12 +2805,13 @@ window.exportBackup = async function(){
   try {
     const backup = {
       exportDate: new Date().toISOString(),
-      version: '2.0',
+      version: '2.1',
       income: incomeData,
       expenses: expenseData,
       deposits: depositsData,
       withdrawals: withdrawalsData,
       services: serviceData,
+      marketing: marketingData,
       loanFromCo: loanFromCoData,
       loanToCo: loanToCoData,
       bankBalance: bankBalance
@@ -2835,20 +2836,33 @@ window.importBackup = async function(){
   const status = document.getElementById('backup-status');
   status.style.display='block';
   if(!file){ status.style.background='var(--red-pale)'; status.style.color='var(--red)'; status.textContent='يرجى اختيار ملف JSON أولاً'; return; }
-  if(!confirm('تأكيد الاستيراد؟ سيتم إضافة البيانات فوق الموجودة.')) return;
+  const clearFirst = confirm('هل تريد حذف البيانات الموجودة قبل الاستيراد؟\n\n✅ موافق = حذف ثم استيراد (يمنع التكرار)\n❌ إلغاء = استيراد فوق الموجود');
+  if(!confirm('تأكيد الاستيراد؟')) return;
   status.style.background='var(--gold-pale)'; status.style.color='var(--gold)';
   status.textContent='⏳ جاري الاستيراد...';
   try {
     const text = await file.text();
     const data = JSON.parse(text);
     let count = 0;
-    const cols = ['income','expenses','deposits','withdrawals','services','loanFromCo','loanToCo'];
-    const colMap = {income:'income',expenses:'expenses',deposits:'deposits',withdrawals:'withdrawals',services:'services',loanFromCo:'loanFromCo',loanToCo:'loanToCo'};
+    const cols = ['income','expenses','deposits','withdrawals','services','marketing','loanFromCo','loanToCo'];
+    const colMap = {income:'income',expenses:'expenses',deposits:'deposits',withdrawals:'withdrawals',services:'services',marketing:'marketing',loanFromCo:'loanFromCo',loanToCo:'loanToCo'};
+    if(clearFirst){
+      status.textContent='⏳ جاري حذف البيانات القديمة...';
+      for(const col of cols){
+        const snap = await window.getDocs(window.collection(db, colMap[col]));
+        for(const d of snap.docs){ await window.deleteDoc(window.doc(db, colMap[col], d.id)); }
+      }
+      status.textContent='⏳ جاري الاستيراد...';
+    }
     for(const col of cols){
       if(data[col]&&Array.isArray(data[col])){
         for(const item of data[col]){
           const {id,...rest}=item;
-          await addDoc(collection(db,colMap[col]),{...rest,importedAt:serverTimestamp()});
+          if(id && clearFirst){
+            await setDoc(doc(db,colMap[col],id),{...rest,importedAt:serverTimestamp()});
+          } else {
+            await addDoc(collection(db,colMap[col]),{...rest,importedAt:serverTimestamp()});
+          }
           count++;
         }
       }
