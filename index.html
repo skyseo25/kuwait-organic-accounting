@@ -347,8 +347,8 @@
         <div class="section-card">
           <div class="section-header"><h3>تفصيل الخدمات</h3></div>
           <table>
-            <thead><tr><th>التاريخ</th><th>الوصف</th><th>قيمة الخدمة</th><th>ساجد</th><th>إسلام</th><th>جعفر</th><th>عمران</th><th>تكلفة الأدوات</th><th>صافي الخدمة</th><th></th></tr></thead>
-            <tbody id="service-table-body"><tr><td colspan="10" class="empty-state">لا توجد خدمات</td></tr></tbody>
+            <thead><tr><th style="width:40px">#</th><th>التاريخ</th><th>الوصف</th><th>قيمة الخدمة</th><th>ساجد</th><th>إسلام</th><th>جعفر</th><th>عمران</th><th>تكلفة الأدوات</th><th>صافي الخدمة</th><th></th></tr></thead>
+            <tbody id="service-table-body"><tr><td colspan="11" class="empty-state">لا توجد خدمات</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -554,7 +554,7 @@
               <span style="font-family:var(--mono);font-size:13px;color:var(--blue);font-weight:600" id="print-svc-total"></span>
             </div>
             <table>
-              <thead><tr><th>التاريخ</th><th>الوصف</th><th>قيمة الخدمة</th><th>ساجد</th><th>إسلام</th><th>جعفر</th><th>عمران</th><th>الأدوات</th><th>صافي</th></tr></thead>
+              <thead><tr><th>#</th><th>التاريخ</th><th>الوصف</th><th>قيمة الخدمة</th><th>ساجد</th><th>إسلام</th><th>جعفر</th><th>عمران</th><th>الأدوات</th><th>صافي</th></tr></thead>
               <tbody id="print-svc-body"></tbody>
             </table>
           </div>
@@ -2377,9 +2377,9 @@ window.renderServices=function(){
   document.getElementById('svc-total-labor').textContent=fmtKWD(totalLabor);
   document.getElementById('svc-net').textContent=fmtKWD(net);
   const tbody=document.getElementById('service-table-body');
-  if(!data.length){tbody.innerHTML=`<tr><td colspan="10" class="empty-state">لا توجد خدمات</td></tr>`;return;}
-  tbody.innerHTML=data.map(r=>`<tr>
-    <td>${r.date||''}</td><td>${r.desc||'—'}</td>
+  if(!data.length){tbody.innerHTML=`<tr><td colspan="11" class="empty-state">لا توجد خدمات</td></tr>`;return;}
+  tbody.innerHTML=data.map((r,idx)=>`<tr>
+    <td style="text-align:center;color:var(--text-muted);font-size:12px;font-weight:600;background:#fafcfb">${idx+1}</td><td>${r.date||''}</td><td>${r.desc||'—'}</td>
     <td class="amount-cell pos">${fmtKWD(r.value)}</td>
     <td class="amount-cell">${fmtKWD(r.sajed)}</td>
     <td class="amount-cell">${fmtKWD(r.islam)}</td>
@@ -2751,8 +2751,8 @@ window.renderReports=function(){
     <div class="summary-card"><div class="label">إجمالي مكافآت العمالة</div><div class="amount expense">${fmtKWD(totalSvcLabor)}</div></div>
     <div class="summary-card" style="background:var(--green-pale)"><div class="label">صافي الخدمات</div><div class="amount income">${fmtKWD(totalSvcNet)}</div></div>`;
   document.getElementById('print-svc-body').innerHTML=serviceData.length
-    ?serviceData.map(r=>`<tr>
-      <td>${r.date||''}</td><td>${r.desc||'—'}</td>
+    ?serviceData.map((r,idx)=>`<tr>
+      <td style="text-align:center;font-size:11px;color:#666">${idx+1}</td><td>${r.date||''}</td><td>${r.desc||'—'}</td>
       <td class="amount-cell pos">${fmtKWD(r.value)}</td>
       <td class="amount-cell">${fmtKWD(r.sajed)}</td>
       <td class="amount-cell">${fmtKWD(r.islam)}</td>
