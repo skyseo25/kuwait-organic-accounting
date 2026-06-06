@@ -119,7 +119,10 @@
 
   <div class="main">
     <div class="topbar">
-      <h1 id="page-title">لوحة التحكم</h1>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <h1 id="page-title">لوحة التحكم</h1>
+        <span id="last-backup-badge" style="display:none;font-size:11px;color:var(--text-muted);background:var(--green-pale);border:1px solid var(--green-dim);border-radius:20px;padding:3px 10px;font-weight:500">💾 <span id="last-backup-text">—</span></span>
+      </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <!-- Global Period Filter -->
         <div id="global-filter-bar" style="display:flex;align-items:center;gap:6px">
@@ -1725,6 +1728,7 @@ window.applyGlobalFilter = function(){
 };
 
 function refreshAllPages(){
+  loadLastBackupDate();
   // Invalidate reports render cache on data change
   var rp=document.getElementById('page-reports');
   if(rp) rp._rendered=false;
@@ -2015,6 +2019,29 @@ function updateDiffDisplay(){
   }
   if(d3){ d3.textContent=fmtKWD(Math.abs(diff)); d3.className='amount '+(diff>=0?'diff-pos':'diff-neg'); }
   document.getElementById('bank-balance-display').textContent=fmtKWD(bankBalance);
+}
+
+
+// ─── LAST BACKUP DISPLAY ───────────────────────────────
+async function loadLastBackupDate(){
+  try {
+    const snap = await window.getDoc(window.doc(db,'settings','lastBackup'));
+    if(snap && snap.exists()){
+      const d = snap.data();
+      const dt = new Date(d.date);
+      const formatted = dt.toLocaleString('ar-KW',{
+        year:'numeric', month:'short', day:'numeric',
+        hour:'2-digit', minute:'2-digit'
+      });
+      const badge = document.getElementById('last-backup-badge');
+      const text = document.getElementById('last-backup-text');
+      if(badge && text){
+        text.textContent = 'آخر نسخة: ' + formatted;
+        badge.style.display = 'inline-flex';
+        badge.style.alignItems = 'center';
+      }
+    }
+  } catch(e){ /* لا توجد نسخة سابقة */ }
 }
 
 // ─── REALTIME LISTENERS ────────────────────────────────
@@ -2896,6 +2923,13 @@ window.exportBackup = async function(){
     a.download = `kuwait-organic-backup-v3-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    // حفظ تاريخ آخر نسخة في Firebase
+    await setDoc(doc(db,'settings','lastBackup'),{date:new Date().toISOString(),records:total,updatedAt:serverTimestamp()});
+    // تحديث الـ badge فوراً
+    const nowFmt = new Date().toLocaleString('ar-KW',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    const badge = document.getElementById('last-backup-badge');
+    const txt = document.getElementById('last-backup-text');
+    if(badge&&txt){txt.textContent='آخر نسخة: '+nowFmt;badge.style.display='inline-flex';badge.style.alignItems='center';}
     status.textContent = `✅ تم تحميل النسخة الاحتياطية — ${total} سجل من ${Object.keys(backup.summary).length - 1} قسم`;
   } catch(e) {
     status.style.background='var(--red-pale)';
