@@ -2145,13 +2145,17 @@ window.openIncomeModal=function(id){
   else{document.getElementById('income-date').value=today();document.getElementById('income-amount').value='';document.getElementById('income-desc').value='';}
   document.getElementById('modal-income').classList.add('open');
 };
+var _savingIncome=false;
 window.saveIncome=async function(){
+  if(_savingIncome)return; _savingIncome=true;
+  try{
   const eid=document.getElementById('income-edit-id').value;
   const data={date:document.getElementById('income-date').value,category:document.getElementById('income-cat').value,amount:parseFloat(document.getElementById('income-amount').value)||0,desc:document.getElementById('income-desc').value,updatedAt:serverTimestamp()};
   if(!data.date||!data.amount){toast('يرجى تعبئة التاريخ والمبلغ');return;}
   if(eid){await updateDoc(doc(db,'income',eid),data);toast('تم التعديل ✓');}
   else{data.createdBy=currentUser.uid;data.userCode=window.currentUserCode||'?';data.createdAt=serverTimestamp();await addDoc(collection(db,'income'),data);toast('تم إضافة الإيراد ✓');}
   closeModal('modal-income');
+  }finally{_savingIncome=false;}
 };
 window.deleteIncome=async function(id){if(!confirm('حذف هذا الإيراد؟'))return;await deleteDoc(doc(db,'income',id));toast('تم الحذف');};
 window.renderIncome=function(){
@@ -2231,13 +2235,17 @@ window.openExpenseModal=function(id){
   else{document.getElementById('expense-date').value=today();document.getElementById('expense-amount').value='';document.getElementById('expense-desc').value='';}
   document.getElementById('modal-expense').classList.add('open');
 };
+var _savingExpense=false;
 window.saveExpense=async function(){
+  if(_savingExpense)return; _savingExpense=true;
+  try{
   const eid=document.getElementById('expense-edit-id').value;
   const data={date:document.getElementById('expense-date').value,category:document.getElementById('expense-cat').value,amount:parseFloat(document.getElementById('expense-amount').value)||0,desc:document.getElementById('expense-desc').value,updatedAt:serverTimestamp()};
   if(!data.date||!data.amount){toast('يرجى تعبئة التاريخ والمبلغ');return;}
   if(eid){await updateDoc(doc(db,'expenses',eid),data);toast('تم التعديل ✓');}
   else{data.createdBy=currentUser.uid;data.userCode=window.currentUserCode||'?';data.createdAt=serverTimestamp();await addDoc(collection(db,'expenses'),data);toast('تم إضافة المصروف ✓');}
   closeModal('modal-expense');
+  }finally{_savingExpense=false;}
 };
 window.deleteExpense=async function(id){if(!confirm('حذف هذا المصروف؟'))return;await deleteDoc(doc(db,'expenses',id));toast('تم الحذف');};
 window.renderExpenses=function(){
@@ -2314,25 +2322,30 @@ window.openMarketingModal=function(id){
   }
   document.getElementById('modal-marketing').classList.add('open');
 };
+var _savingMarketing=false;
 window.saveMarketing=async function(){
-  const eid=document.getElementById('mkt-edit-id').value;
-  const data={
-    date:document.getElementById('mkt-date').value,
-    platform:document.getElementById('mkt-platform').value,
-    amount:parseFloat(document.getElementById('mkt-amount').value)||0,
-    desc:document.getElementById('mkt-desc').value,
-    updatedAt:serverTimestamp()
-  };
-  if(!data.date||!data.amount){toast('يرجى تعبئة التاريخ والمبلغ');return;}
-  if(eid){await updateDoc(doc(db,'marketing',eid),data);toast('تم التعديل ✓');}
-  else{
-    data.createdBy=currentUser.uid;
-    data.userCode=window.currentUserCode||'?';
-    data.createdAt=serverTimestamp();
-    await addDoc(collection(db,'marketing'),data);
-    toast('تم إضافة السجل الإعلاني ✓');
-  }
-  closeModal('modal-marketing');
+  if(_savingMarketing) return;
+  _savingMarketing=true;
+  try{
+    const eid=document.getElementById('mkt-edit-id').value;
+    const data={
+      date:document.getElementById('mkt-date').value,
+      platform:document.getElementById('mkt-platform').value,
+      amount:parseFloat(document.getElementById('mkt-amount').value)||0,
+      desc:document.getElementById('mkt-desc').value,
+      updatedAt:serverTimestamp()
+    };
+    if(!data.date||!data.amount){toast('يرجى تعبئة التاريخ والمبلغ');return;}
+    if(eid){await updateDoc(doc(db,'marketing',eid),data);toast('تم التعديل ✓');}
+    else{
+      data.createdBy=currentUser.uid;
+      data.userCode=window.currentUserCode||'?';
+      data.createdAt=serverTimestamp();
+      await addDoc(collection(db,'marketing'),data);
+      toast('تم إضافة السجل الإعلاني ✓');
+    }
+    closeModal('modal-marketing');
+  }finally{_savingMarketing=false;}
 };
 window.deleteMarketing=async function(id){
   if(!confirm('حذف هذا السجل الإعلاني؟'))return;
